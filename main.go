@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
 	"github.com/rivo/tview"
 )
@@ -24,9 +25,9 @@ func loadMensas(list *tview.List) {
 }
 
 func errHandler(err error) {
-
 	modal := tview.NewModal().
-		SetText(err.Error()).
+		SetBackgroundColor(tcell.ColorDarkRed).
+		SetText("Error: " + err.Error()).
 		AddButtons([]string{"OK", "Quit"})
 
 	modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
