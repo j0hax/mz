@@ -11,9 +11,6 @@ import (
 var app *tview.Application
 var pages *tview.Pages
 
-var menuList *tview.List
-var detailView *tview.TextView
-
 func loadMensas(list *tview.List) {
 	mensas, err := openmensa.GetCanteens()
 
@@ -44,41 +41,31 @@ func errHandler(err error) {
 	pages.ShowPage("errmsg")
 }
 
-func displayMenu(index int, mainText string, secondaryText string, shortcut rune) {
-	menuList.SetTitle(fmt.Sprintf("Menu for %s", mainText))
-	menuList.Clear()
+// displayMenu updates the given list when new meals arrive by channel.
+// This function is meant to be run as a goroutine.
+func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, index <-chan int) {
+	var current_menu []openmensa.Meal
+	for {
+		select {
+		case current_menu = <-menu:
+			menuList.Clear()
 
-	mensa, err := openmensa.FindCanteen(mainText)
+			for _, m := range current_menu {
+				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), 0, nil)
+			}
+		case i := <-index:
+			detailView.Clear()
 
-	if err != nil {
-		errHandler(errors.New("could not find Canteen"))
-	}
+			var contents string
+			for _, note := range current_menu[i].Notes {
+				contents += fmt.Sprintf(" - %s\n", note)
+			}
 
-	menu, err := openmensa.GetMeals(mensa.Id)
+			detailView.SetText(contents)
+		}
 
-	if err != nil {
-		errHandler(errors.New("no Cateen data"))
-	}
-
-	for _, m := range menu {
-		menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), 0, nil)
 	}
 }
-
-/*
-func showDetails(index int, mainText string, secondaryText string, shortcut rune) {
-	meal := getMealByName(mainText)
-
-	detailView.Clear()
-
-	var contents string
-	for _, note := range meal.Notes {
-		contents += fmt.Sprintf(" - %s\n", note)
-	}
-
-	detailView.SetText(contents)
-}
-*/
 
 func main() {
 	app = tview.NewApplication()
@@ -92,10 +79,10 @@ func main() {
 
 	menuArea := tview.NewFlex().SetDirection(tview.FlexRow)
 
-	menuList = tview.NewList()
+	menuList := tview.NewList()
 	menuList.SetBorder(true).SetTitle("Menu")
 
-	detailView = tview.NewTextView()
+	detailView := tview.NewTextView()
 	detailView.SetBorder(true)
 
 	menuArea.AddItem(menuList, 0, 2, false)
@@ -104,12 +91,38 @@ func main() {
 	mensaList := tview.NewList()
 	mensaList.SetBorder(true).SetTitle("Mensas").SetTitleAlign(tview.AlignLeft)
 	mensaList.SetHighlightFullLine(true)
-	mensaList.SetSelectedFunc(displayMenu)
-	loadMensas(mensaList)
 
 	mainView.AddItem(mensaList, 0, 1, true)
-
 	mainView.AddItem(menuArea, 0, 2, false)
+
+	currentMenu := make(chan []openmensa.Meal, 1)
+	mealIndex := make(chan int, 1)
+
+	// Send the menu to the handler
+	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		mensa, err := openmensa.FindCanteen(mainText)
+		if err != nil {
+			errHandler(errors.New("could not find Canteen"))
+		}
+
+		menu, err := openmensa.GetMeals(mensa.Id)
+		if err != nil {
+			menuList.Clear()
+			detailView.Clear()
+			errHandler(err)
+			return
+		}
+
+		currentMenu <- menu
+	})
+
+	// Notify the handler that an index has changed
+	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		mealIndex <- index
+	})
+
+	loadMensas(mensaList)
+	go displayMenu(menuList, detailView, currentMenu, mealIndex)
 
 	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
