@@ -14,7 +14,6 @@ var pages *tview.Pages
 
 func loadMensas(list *tview.List) {
 	mensas, err := openmensa.GetCanteens()
-
 	if err != nil {
 		errHandler(err)
 	}
@@ -64,7 +63,6 @@ func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan [
 
 			detailView.SetText(contents)
 		}
-
 	}
 }
 
@@ -91,7 +89,7 @@ func main() {
 
 	mensaList := tview.NewList()
 	mensaList.SetBorder(true).SetTitle("Mensas").SetTitleAlign(tview.AlignLeft)
-	mensaList.SetHighlightFullLine(true)
+	mensaList.SetHighlightFullLine(true).SetSecondaryTextColor(tcell.ColorGray)
 
 	mainView.AddItem(mensaList, 0, 1, true)
 	mainView.AddItem(menuArea, 0, 2, false)
@@ -122,6 +120,7 @@ func main() {
 		mealIndex <- index
 	})
 
+	// Load data needed
 	loadMensas(mensaList)
 	go displayMenu(menuList, detailView, currentMenu, mealIndex)
 
