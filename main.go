@@ -55,13 +55,13 @@ func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan [
 			}
 		case i := <-index:
 			detailView.Clear()
-
-			var contents string
-			for _, note := range current_menu[i].Notes {
+			meal := current_menu[i]
+			contents := fmt.Sprintf("[::b]%s:[::-]\n", meal.Name)
+			for _, note := range meal.Notes {
 				contents += fmt.Sprintf(" - %s\n", note)
 			}
 
-			detailView.SetText(contents)
+			detailView.SetText(contents).ScrollToBeginning()
 		}
 	}
 }
@@ -81,7 +81,7 @@ func main() {
 	menuList := tview.NewList()
 	menuList.SetBorder(true).SetTitle("Menu")
 
-	detailView := tview.NewTextView()
+	detailView := tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	detailView.SetBorder(true)
 
 	menuArea.AddItem(menuList, 0, 2, false)
