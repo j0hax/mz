@@ -50,8 +50,8 @@ func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan [
 		case current_menu = <-menu:
 			menuList.Clear()
 
-			for _, m := range current_menu {
-				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), 0, nil)
+			for i, m := range current_menu {
+				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1' + i), nil)
 			}
 		case i := <-index:
 			detailView.Clear()
