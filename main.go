@@ -88,7 +88,7 @@ func main() {
 	menuArea.AddItem(detailView, 0, 1, false)
 
 	mensaList := tview.NewList()
-	mensaList.SetBorder(true).SetTitle("Mensas").SetTitleAlign(tview.AlignLeft)
+	mensaList.SetBorder(true).SetTitle("Canteens")
 	mensaList.SetHighlightFullLine(true).SetSecondaryTextColor(tcell.ColorGray)
 
 	mainView.AddItem(mensaList, 0, 1, true)
