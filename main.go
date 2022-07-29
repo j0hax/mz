@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 )
 
@@ -51,7 +52,7 @@ func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan [
 			menuList.Clear()
 
 			for i, m := range current_menu {
-				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1' + i), nil)
+				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
 			}
 		case i := <-index:
 			detailView.Clear()
@@ -112,6 +113,9 @@ func main() {
 			return
 		}
 
+		// Save the canteen
+		config.SaveLastCanteen(mainText)
+
 		currentMenu <- menu
 	})
 
@@ -120,9 +124,19 @@ func main() {
 		mealIndex <- index
 	})
 
-	// Load data needed
-	loadMensas(mensaList)
 	go displayMenu(menuList, detailView, currentMenu, mealIndex)
+
+	// Retrieve the last canteen
+	last := config.GetLastCanteen()
+
+	// Load list of canteens
+	loadMensas(mensaList)
+
+	// Set the newly populated list back to the last viewed
+	if len(last) > 1 {
+		matches := mensaList.FindItems(last, "", true, true)
+		mensaList.SetCurrentItem(matches[0])
+	}
 
 	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
