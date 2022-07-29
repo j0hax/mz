@@ -6,13 +6,17 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 )
 
 var app *tview.Application
 var pages *tview.Pages
 
-func loadMensas(list *tview.List) {
+// loadCanteens retrieves canteens and populates the passed list with them.
+//
+// Currently, name and adress are loaded without further configuration.
+func loadCanteens(list *tview.List) {
 	mensas, err := openmensa.GetCanteens()
 	if err != nil {
 		errHandler(err)
@@ -23,6 +27,9 @@ func loadMensas(list *tview.List) {
 	}
 }
 
+// errHandler displays the given error message as a red modal.
+//
+// The user is given the option to dismiss the dialog or quit the program.
 func errHandler(err error) {
 	modal := tview.NewModal().
 		SetBackgroundColor(tcell.ColorDarkRed).
@@ -41,7 +48,8 @@ func errHandler(err error) {
 	pages.ShowPage("errmsg")
 }
 
-// displayMenu updates the given list when new meals arrive by channel.
+// displayMenu updates menu listings and meal details.
+//
 // This function is meant to be run as a goroutine.
 func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, index <-chan int) {
 	var current_menu []openmensa.Meal
@@ -51,7 +59,7 @@ func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan [
 			menuList.Clear()
 
 			for i, m := range current_menu {
-				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1' + i), nil)
+				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
 			}
 		case i := <-index:
 			detailView.Clear()
@@ -112,6 +120,9 @@ func main() {
 			return
 		}
 
+		// Save the canteen
+		config.SaveLastCanteen(mainText)
+
 		currentMenu <- menu
 	})
 
@@ -120,9 +131,19 @@ func main() {
 		mealIndex <- index
 	})
 
-	// Load data needed
-	loadMensas(mensaList)
 	go displayMenu(menuList, detailView, currentMenu, mealIndex)
+
+	// Retrieve the last canteen
+	last := config.GetLastCanteen()
+
+	// Load list of canteens
+	loadCanteens(mensaList)
+
+	// Set the newly populated list back to the last viewed
+	if len(last) > 1 {
+		matches := mensaList.FindItems(last, "", true, true)
+		mensaList.SetCurrentItem(matches[0])
+	}
 
 	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
