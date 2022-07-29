@@ -13,7 +13,10 @@ import (
 var app *tview.Application
 var pages *tview.Pages
 
-func loadMensas(list *tview.List) {
+// loadCanteens retrieves canteens and populates the passed list with them.
+//
+// Currently, name and adress are loaded without further configuration.
+func loadCanteens(list *tview.List) {
 	mensas, err := openmensa.GetCanteens()
 	if err != nil {
 		errHandler(err)
@@ -24,6 +27,9 @@ func loadMensas(list *tview.List) {
 	}
 }
 
+// errHandler displays the given error message as a red modal.
+//
+// The user is given the option to dismiss the dialog or quit the program.
 func errHandler(err error) {
 	modal := tview.NewModal().
 		SetBackgroundColor(tcell.ColorDarkRed).
@@ -42,7 +48,8 @@ func errHandler(err error) {
 	pages.ShowPage("errmsg")
 }
 
-// displayMenu updates the given list when new meals arrive by channel.
+// displayMenu updates menu listings and meal details.
+//
 // This function is meant to be run as a goroutine.
 func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, index <-chan int) {
 	var current_menu []openmensa.Meal
@@ -130,7 +137,7 @@ func main() {
 	last := config.GetLastCanteen()
 
 	// Load list of canteens
-	loadMensas(mensaList)
+	loadCanteens(mensaList)
 
 	// Set the newly populated list back to the last viewed
 	if len(last) > 1 {

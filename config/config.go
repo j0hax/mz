@@ -1,3 +1,4 @@
+// Package config provides functions for caching state
 package config
 
 import (
@@ -48,6 +49,7 @@ func GetLastCanteen() string {
 
 	dat, err := os.ReadFile(file)
 	if err != nil {
+		// Ignore missing files
 		if !errors.Is(err, os.ErrNotExist) {
 			log.Print(err)
 		}
