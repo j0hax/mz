@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 )
+
+// errHandler displays the given error message in the .detail view.
+func errHandler(err error) {
+	detailView.SetText("[red]Error:[-] " + err.Error())
+}
 
 // loadCanteens retrieves canteens and populates the passed list with them.
 //
@@ -15,6 +20,7 @@ func loadCanteens(list *tview.List) {
 	mensas, err := openmensa.GetCanteens()
 	if err != nil {
 		errHandler(err)
+		return
 	}
 
 	for _, m := range mensas {
@@ -22,49 +28,63 @@ func loadCanteens(list *tview.List) {
 	}
 }
 
-// errHandler displays the given error message as a red modal.
-//
-// The user is given the option to dismiss the dialog or quit the program.
-func errHandler(err error) {
-	modal := tview.NewModal().
-		SetBackgroundColor(tcell.ColorDarkRed).
-		SetText("Error: " + err.Error()).
-		AddButtons([]string{"OK", "Quit"})
-
-	modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-		if buttonLabel == "OK" {
-			pages.RemovePage("errmsg")
-		} else if buttonLabel == "Quit" {
-			app.Stop()
-		}
-	})
-
-	pages.AddPage("errmsg", modal, false, true)
-	pages.ShowPage("errmsg")
-}
-
 // displayMenu updates menu listings and meal details.
 //
 // This function is meant to be run as a goroutine.
-func displayMenu(menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, index <-chan int) {
+func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, mealIndex <-chan int) {
 	var current_menu []openmensa.Meal
 	for {
 		select {
 		case current_menu = <-menu:
-			menuList.Clear()
+			app.QueueUpdateDraw(func() {
+				menuList.Clear()
 
-			for i, m := range current_menu {
-				menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
+				for i, m := range current_menu {
+					menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
+				}
+			})
+		case i := <-mealIndex:
+			if i < len(current_menu) {
+				detailView.Clear()
+				meal := current_menu[i]
+				contents := fmt.Sprintf("[::b]%s:[::-]\n", meal.Name)
+				for _, note := range meal.Notes {
+					contents += fmt.Sprintf(" - %s\n", note)
+				}
+				detailView.SetText(contents)
 			}
-		case i := <-index:
-			detailView.Clear()
-			meal := current_menu[i]
-			contents := fmt.Sprintf("[::b]%s:[::-]\n", meal.Name)
-			for _, note := range meal.Notes {
-				contents += fmt.Sprintf(" - %s\n", note)
-			}
-
-			detailView.SetText(contents).ScrollToBeginning()
 		}
+	}
+}
+
+// canteenSelected allows for asynchonous retrieval of meal information.
+//
+// Canteen names are searched after arrival in the channel, their current meals are
+// then sent through currentMenu.
+//
+// This function is meant to be run as a goroutine.
+func canteenSelected(canteenName <-chan string, currentMenu chan<- []openmensa.Meal) {
+	for name := range canteenName {
+
+		// Save the canteen
+		config.SaveLastCanteen(name)
+
+		// Find the canteen by its name
+		mensa, err := openmensa.FindCanteen(name)
+		if err != nil {
+			errHandler(err)
+			continue
+		}
+
+		// Find the meals served by the canteen
+		menu, err := openmensa.GetMeals(mensa.Id)
+
+		if err != nil {
+			errHandler(err)
+		}
+
+		// Update the displayed menu.
+		// If there was an error, menu will be nil, and the list will be cleared anyways.
+		currentMenu <- menu
 	}
 }
