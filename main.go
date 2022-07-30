@@ -43,6 +43,14 @@ func main() {
 	currentMenu := make(chan []openmensa.Meal, 1)
 	mealIndex := make(chan int, 1)
 
+	go displayMenu(menuList, detailView, currentMenu, mealIndex)
+
+	// Retrieve the last canteen
+	last := config.GetLastCanteen()
+
+	// Load list of canteens
+	loadCanteens(mensaList)
+
 	// Send the menu to the handler
 	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		// Find the canteen by its name
@@ -71,14 +79,6 @@ func main() {
 	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		mealIndex <- index
 	})
-
-	go displayMenu(menuList, detailView, currentMenu, mealIndex)
-
-	// Retrieve the last canteen
-	last := config.GetLastCanteen()
-
-	// Load list of canteens
-	loadCanteens(mensaList)
 
 	// Set the newly populated list back to the last viewed
 	if len(last) > 1 {
