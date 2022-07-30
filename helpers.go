@@ -65,6 +65,8 @@ func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview
 // This function is meant to be run as a goroutine.
 func canteenSelected(canteenName <-chan string, currentMenu chan<- []openmensa.Meal) {
 	for name := range canteenName {
+		// Notify the user data is being requiested
+		detailView.SetText("Loading...")
 
 		// Save the canteen
 		config.SaveLastCanteen(name)
