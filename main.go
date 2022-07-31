@@ -45,10 +45,11 @@ func main() {
 
 	currentCanteen := make(chan string, 1)
 	currentMenu := make(chan []openmensa.Meal, 1)
+	currentDate := make(chan openmensa.Day, 1)
 	mealIndex := make(chan int, 1)
 
-	go canteenSelected(currentCanteen, currentMenu)
-	go displayMenu(app, menuList, detailView, currentMenu, mealIndex)
+	go canteenSelected(currentCanteen, currentMenu, currentDate)
+	go displayMenu(app, menuList, detailView, currentMenu, currentDate, mealIndex)
 
 	// Retrieve the last canteen
 	last := config.GetLastCanteen()

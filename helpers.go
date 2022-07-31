@@ -31,10 +31,14 @@ func loadCanteens(list *tview.List) {
 // displayMenu updates menu listings and meal details.
 //
 // This function is meant to be run as a goroutine.
-func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, mealIndex <-chan int) {
+func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, date <-chan openmensa.Day, mealIndex <-chan int) {
 	var current_menu []openmensa.Meal
 	for {
 		select {
+		case current_date := <-date:
+			app.QueueUpdateDraw(func() {
+				menuList.SetTitle("Menu on " + current_date.Date.String())
+			})
 		case current_menu = <-menu:
 			app.QueueUpdateDraw(func() {
 				menuList.Clear()
@@ -63,7 +67,7 @@ func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview
 // then sent through currentMenu.
 //
 // This function is meant to be run as a goroutine.
-func canteenSelected(canteenName <-chan string, currentMenu chan<- []openmensa.Meal) {
+func canteenSelected(canteenName <-chan string, currentMenu chan<- []openmensa.Meal, nextDay chan<- openmensa.Day) {
 	for name := range canteenName {
 		// Notify the user data is being requiested
 		detailView.SetText("Loading...")
@@ -79,10 +83,12 @@ func canteenSelected(canteenName <-chan string, currentMenu chan<- []openmensa.M
 		}
 
 		// Find the meals served by the canteen
-		menu, err := openmensa.GetMeals(mensa.Id)
+		menu, date, err := openmensa.GetNextMeals(mensa.Id)
 
 		if err != nil {
 			errHandler(err)
+		} else {
+			nextDay <- *date
 		}
 
 		// Update the displayed menu.
