@@ -1,30 +1,31 @@
 package main
 
 import (
+	"code.rocketnine.space/tslocum/cview"
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
 	"github.com/j0hax/mz/config"
-	"github.com/rivo/tview"
 )
 
-var detailView *tview.TextView
+var detailView *cview.TextView
 
 func main() {
-	app := tview.NewApplication()
+	app := cview.NewApplication()
 	app.EnableMouse(true)
 
-	pages := tview.NewPages()
+	mainView := cview.NewFlex()
 
-	mainView := tview.NewFlex()
+	menuArea := cview.NewFlex()
+	menuArea.SetDirection(cview.FlexRow)
 
-	pages.AddPage("mensaview", mainView, true, true)
+	menuList := cview.NewList()
+	menuList.SetBorder(true)
+	menuList.SetTitle("Menu")
 
-	menuArea := tview.NewFlex().SetDirection(tview.FlexRow)
-
-	menuList := tview.NewList()
-	menuList.SetBorder(true).SetTitle("Menu")
-
-	detailView = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
+	detailView = cview.NewTextView()
+	detailView.SetDynamicColors(true)
+	detailView.SetWrap(true)
+	detailView.SetWordWrap(true)
 	detailView.SetBorder(true)
 
 	// Manually update as texts are loaded from a goroutine
@@ -36,9 +37,11 @@ func main() {
 	menuArea.AddItem(menuList, 0, 2, false)
 	menuArea.AddItem(detailView, 0, 1, false)
 
-	mensaList := tview.NewList()
-	mensaList.SetBorder(true).SetTitle("Canteens")
-	mensaList.SetHighlightFullLine(true).SetSecondaryTextColor(tcell.ColorGray)
+	mensaList := cview.NewList()
+	mensaList.SetBorder(true)
+	mensaList.SetTitle("Canteens")
+	mensaList.SetHighlightFullLine(true)
+	mensaList.SetSecondaryTextColor(tcell.ColorGray)
 
 	mainView.AddItem(mensaList, 0, 1, true)
 	mainView.AddItem(menuArea, 0, 2, false)
@@ -58,12 +61,12 @@ func main() {
 	loadCanteens(mensaList)
 
 	// Send the menu to the handler
-	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		currentCanteen <- mainText
+	mensaList.SetChangedFunc(func(index int, item *cview.ListItem) {
+		currentCanteen <- item.GetMainText()
 	})
 
 	// Notify the handler that an index has changed
-	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+	menuList.SetChangedFunc(func(index int, item *cview.ListItem) {
 		mealIndex <- index
 	})
 
@@ -73,7 +76,8 @@ func main() {
 		mensaList.SetCurrentItem(matches[0])
 	}
 
-	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
+	app.SetRoot(mainView, true)
+	if err := app.Run(); err != nil {
 		panic(err)
 	}
 }

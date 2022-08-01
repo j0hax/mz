@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
+	"code.rocketnine.space/tslocum/cview"
 	"github.com/j0hax/go-openmensa"
 	"github.com/j0hax/mz/config"
-	"github.com/rivo/tview"
 )
 
 // errHandler displays the given error message in the .detail view.
@@ -16,7 +16,7 @@ func errHandler(err error) {
 // loadCanteens retrieves canteens and populates the passed list with them.
 //
 // Currently, name and adress are loaded without further configuration.
-func loadCanteens(list *tview.List) {
+func loadCanteens(list *cview.List) {
 	mensas, err := openmensa.GetCanteens()
 	if err != nil {
 		errHandler(err)
@@ -24,14 +24,16 @@ func loadCanteens(list *tview.List) {
 	}
 
 	for _, m := range mensas {
-		list.AddItem(m.Name, m.Address, 0, nil)
+		item := cview.NewListItem(m.Name)
+		item.SetSecondaryText(m.Address)
+		list.AddItem(item)
 	}
 }
 
 // displayMenu updates menu listings and meal details.
 //
 // This function is meant to be run as a goroutine.
-func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview.TextView, menu <-chan []openmensa.Meal, date <-chan openmensa.Day, mealIndex <-chan int) {
+func displayMenu(app *cview.Application, menuList *cview.List, detailView *cview.TextView, menu <-chan []openmensa.Meal, date <-chan openmensa.Day, mealIndex <-chan int) {
 	var current_menu []openmensa.Meal
 	for {
 		select {
@@ -43,8 +45,12 @@ func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview
 			app.QueueUpdateDraw(func() {
 				menuList.Clear()
 
-				for i, m := range current_menu {
-					menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
+				for _, m := range current_menu {
+					item := cview.NewListItem(m.Name)
+
+					price := fmt.Sprintf("%.2f€", m.Prices["students"])
+					item.SetSecondaryText(price)
+					menuList.AddItem(item)
 				}
 			})
 		case i := <-mealIndex:
