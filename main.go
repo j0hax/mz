@@ -13,12 +13,9 @@ func main() {
 	app := tview.NewApplication()
 	app.EnableMouse(true)
 
-	pages := tview.NewPages()
-
 	mainView := tview.NewFlex()
 
-	pages.AddPage("mensaview", mainView, true, true)
-
+	mensaArea := tview.NewFlex().SetDirection(tview.FlexRow)
 	menuArea := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	menuList := tview.NewList()
@@ -40,16 +37,26 @@ func main() {
 	mensaList.SetBorder(true).SetTitle("Canteens")
 	mensaList.SetHighlightFullLine(true).SetSecondaryTextColor(tcell.ColorGray)
 
-	mainView.AddItem(mensaList, 0, 1, true)
+	calendar := tview.NewList()
+	calendar.SetBorder(true).SetTitle("Dates")
+	calendar.SetHighlightFullLine(true).ShowSecondaryText(false)
+
+	mensaArea.AddItem(mensaList, 0, 3, true)
+	mensaArea.AddItem(calendar, 0, 1, true)
+
+	mainView.AddItem(mensaArea, 0, 1, true)
 	mainView.AddItem(menuArea, 0, 2, false)
 
+	// Canteen and date
 	currentCanteen := make(chan string, 1)
+	currentDate := make(chan string, 1)
+
+	// Menu and menu index
 	currentMenu := make(chan []openmensa.Meal, 1)
-	currentDate := make(chan openmensa.Day, 1)
 	mealIndex := make(chan int, 1)
 
-	go canteenSelected(currentCanteen, currentMenu, currentDate)
-	go displayMenu(app, menuList, detailView, currentMenu, currentDate, mealIndex)
+	go selection(app, calendar, currentCanteen, currentDate, currentMenu)
+	go displayMenu(app, menuList, detailView, currentMenu, mealIndex)
 
 	// Retrieve the last canteen
 	last := config.GetLastCanteen()
@@ -57,13 +64,22 @@ func main() {
 	// Load list of canteens
 	loadCanteens(mensaList)
 
-	// Send the menu to the handler
+	// Send the canteen and dates to the handler
 	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		menuList.Clear()
+		detailView.Clear()
+		calendar.Clear()
 		currentCanteen <- mainText
+	})
+	calendar.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		menuList.Clear()
+		detailView.Clear()
+		currentDate <- mainText
 	})
 
 	// Notify the handler that an index has changed
 	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		detailView.Clear()
 		mealIndex <- index
 	})
 
@@ -73,7 +89,7 @@ func main() {
 		mensaList.SetCurrentItem(matches[0])
 	}
 
-	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
+	if err := app.SetRoot(mainView, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
 	}
 }
