@@ -49,7 +49,13 @@ func displayMenu(app *tview.Application, menuList *tview.List, detailView *tview
 		case current_menu = <-menu:
 			app.QueueUpdateDraw(func() {
 				for i, m := range current_menu {
-					menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), rune('1'+i), nil)
+					// The first 9 meals get a shortcut, the rest is NUL
+					shortcut := rune(0)
+					if i < 9 {
+						shortcut = rune('1' + i)
+					}
+
+					menuList.AddItem(m.Name, fmt.Sprintf("%.2f€", m.Prices["students"]), shortcut, nil)
 				}
 			})
 		case i := <-mealIndex:
