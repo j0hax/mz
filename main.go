@@ -48,15 +48,16 @@ func main() {
 	mainView.AddItem(menuArea, 0, 2, false)
 
 	// Canteen and date
-	currentCanteen := make(chan string, 1)
-	currentDate := make(chan string, 1)
+	canteenSel := make(chan string, 1)
+	dateSel := make(chan string, 1)
 
 	// Menu and menu index
-	currentMenu := make(chan []openmensa.Meal, 1)
-	mealIndex := make(chan int, 1)
+	menuSel := make(chan []openmensa.Meal, 1)
+	menuIndex := make(chan int, 1)
 
-	go selection(app, calendar, currentCanteen, currentDate, currentMenu)
-	go displayMenu(app, menuList, detailView, currentMenu, mealIndex)
+	// Start goroutines to handle selection changes
+	go selection(app, calendar, canteenSel, dateSel, menuSel)
+	go displayMenu(app, menuList, detailView, menuSel, menuIndex)
 
 	// Retrieve the last canteen
 	last := config.GetLastCanteen()
@@ -69,18 +70,18 @@ func main() {
 		menuList.Clear()
 		detailView.Clear()
 		calendar.Clear()
-		currentCanteen <- mainText
+		canteenSel <- mainText
 	})
 	calendar.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		menuList.Clear()
 		detailView.Clear()
-		currentDate <- mainText
+		dateSel <- mainText
 	})
 
 	// Notify the handler that an index has changed
 	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		detailView.Clear()
-		mealIndex <- index
+		menuIndex <- index
 	})
 
 	// Set the newly populated list back to the last viewed
