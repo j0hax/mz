@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/j0hax/go-openmensa"
@@ -11,6 +12,16 @@ import (
 // errHandler displays the given error message in the .detail view.
 func errHandler(err error) {
 	detailView.SetText("[red]Error:[-] " + err.Error())
+}
+
+// allClosed returns true if all days listed are closed
+func allClosed(days []openmensa.Day) bool {
+	for _, day := range days {
+		if !day.Closed {
+			return false
+		}
+	}
+	return true
 }
 
 // loadCanteens retrieves canteens and populates the passed list with them.
@@ -84,6 +95,11 @@ func selection(app *tview.Application, calendar *tview.List, canteenName <-chan 
 			openings, err := openmensa.GetDays(mensaId)
 			if err != nil {
 				errHandler(err)
+				continue
+			}
+
+			if allClosed(openings) {
+				errHandler(errors.New("canteen is closed on all days"))
 				continue
 			}
 
