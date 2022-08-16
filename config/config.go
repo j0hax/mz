@@ -21,6 +21,21 @@ func GetCacheFile() (string, error) {
 	return cacheFile, nil
 }
 
+// ResetLastCanteen removes the file containing the last saved canteen
+func ResetLastCanteen() error {
+	file, err := GetCacheFile()
+	if err != nil {
+		return err
+	}
+
+	err = os.Remove(file)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SaveLastCanteen saves the name of the last viewed cantine.
 func SaveLastCanteen(name string) error {
 	file, err := GetCacheFile()
