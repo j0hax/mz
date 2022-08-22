@@ -3,7 +3,7 @@ module github.com/j0hax/mz
 go 1.18
 
 require (
-	github.com/gdamore/tcell/v2 v2.5.2
+	github.com/gdamore/tcell/v2 v2.5.3
 	github.com/j0hax/go-openmensa v0.2.3
 	github.com/rivo/tview v0.0.0-20220801133142-711ef394f9b3
 )
