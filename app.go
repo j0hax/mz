@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -13,7 +14,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-var detailView *tview.TextView
+var notesView *tview.TextView
 var currentMensa *openmensa.Canteen
 
 // Generic title case
@@ -27,21 +28,20 @@ func startApp(selected string) {
 
 	mensaArea := tview.NewFlex().SetDirection(tview.FlexRow)
 	menuArea := tview.NewFlex().SetDirection(tview.FlexRow)
+	detailArea := tview.NewFlex().SetDirection(tview.FlexColumn)
+	detailArea.SetBorder(true).SetTitle("Details")
 
 	menuList := tview.NewList()
 	menuList.SetBorder(true).SetTitle("Menu")
 
-	detailView = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
-	detailView.SetBorder(true)
+	notesView = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 
-	// Manually update as texts are loaded from a goroutine
-	detailView.SetChangedFunc(func() {
-		detailView.ScrollToBeginning()
-		app.Draw()
-	})
+	priceTable := tview.NewTable()
 
 	menuArea.AddItem(menuList, 0, 2, false)
-	menuArea.AddItem(detailView, 0, 1, false)
+	detailArea.AddItem(notesView, 0, 1, false)
+	detailArea.AddItem(priceTable, 0, 1, false)
+	menuArea.AddItem(detailArea, 0, 1, false)
 
 	mensaList := tview.NewList()
 	mensaList.SetBorder(true).SetTitle("Canteens")
@@ -59,7 +59,6 @@ func startApp(selected string) {
 
 	// If the selected mensa has changed, load its opening dates
 	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		detailView.SetText("Loading...")
 		menuList.Clear()
 		calendar.Clear()
 
@@ -109,7 +108,6 @@ func startApp(selected string) {
 
 	// If the selected date has changed, load the meals for that date
 	calendar.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		detailView.SetText("Loading...")
 		menuList.Clear()
 
 		// Load meals for the changed date
@@ -138,8 +136,6 @@ func startApp(selected string) {
 
 	// If the selected menu has changed, load details for that menu
 	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		detailView.SetText("Loading...")
-
 		// Load meals for the selected date
 		i := calendar.GetCurrentItem()
 		_, dstr := calendar.GetItemText(i)
@@ -155,11 +151,20 @@ func startApp(selected string) {
 
 		// Set details for the selected meal
 		meal := meals[index]
-		contents := fmt.Sprintf("[::b]%s[::-]\n", priceDisplay(meal.Prices))
-		for _, note := range meal.Notes {
-			contents += fmt.Sprintf(" - %s\n", note)
+
+		notesView.SetText(strings.Join(meal.Notes, ", "))
+
+		// Set prices
+		var row int
+		for k, v := range meal.Prices {
+			if v == 0 {
+				continue
+			}
+			priceTable.SetCellSimple(row, 0, k)
+			price := fmt.Sprintf("%.2f€", v)
+			priceTable.SetCell(row, 1, tview.NewTableCell(price).SetAlign(tview.AlignRight).SetExpansion(1))
+			row = row + 1
 		}
-		detailView.SetText(contents)
 	})
 
 	// Load list of canteens
