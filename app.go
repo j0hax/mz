@@ -28,7 +28,7 @@ func startApp(selected string) {
 
 	mensaArea := tview.NewFlex().SetDirection(tview.FlexRow)
 	menuArea := tview.NewFlex().SetDirection(tview.FlexRow)
-	detailArea := tview.NewFlex().SetDirection(tview.FlexColumn)
+	detailArea := tview.NewFlex().SetDirection(tview.FlexRow)
 	detailArea.SetBorder(true).SetTitle("Details")
 
 	menuList := tview.NewList()
@@ -39,8 +39,8 @@ func startApp(selected string) {
 	priceTable := tview.NewTable()
 
 	menuArea.AddItem(menuList, 0, 2, false)
-	detailArea.AddItem(notesView, 0, 1, false)
 	detailArea.AddItem(priceTable, 0, 1, false)
+	detailArea.AddItem(notesView, 0, 1, false)
 	menuArea.AddItem(detailArea, 0, 1, false)
 
 	mensaList := tview.NewList()
