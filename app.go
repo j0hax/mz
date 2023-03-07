@@ -16,7 +16,7 @@ import (
 var detailView *tview.TextView
 var currentMensa *openmensa.Canteen
 
-// Title Case for generic languages
+// Generic title case
 var titler = cases.Title(language.Und)
 
 func startApp(selected string) {
@@ -78,10 +78,24 @@ func startApp(selected string) {
 		}
 
 		calendar.Clear()
+		today := time.Now().Truncate(24 * time.Hour)
 		for _, d := range days {
 			if !d.Closed {
+
+				// Giga big brain hack: instead of saving the selected date as a global variable,
+				// set the hidden secondary text to a format that can easily be parsed back :)
 				dstr := d.Date.String()
-				calendar.AddItem(dstr, "", 0, nil)
+
+				// Add a nice date
+				date := time.Time(d.Date)
+				var desc string
+				if today.Equal(date) {
+					desc = "Today"
+				} else {
+					desc = date.Format("Monday, January 2")
+				}
+
+				calendar.AddItem(desc, dstr, 0, nil)
 			}
 		}
 
@@ -99,7 +113,7 @@ func startApp(selected string) {
 		menuList.Clear()
 
 		// Load meals for the changed date
-		date, err := time.Parse("2006-01-02", mainText)
+		date, err := time.Parse("2006-01-02", secondaryText)
 		if err != nil {
 			errHandler(err)
 		}
@@ -128,7 +142,7 @@ func startApp(selected string) {
 
 		// Load meals for the selected date
 		i := calendar.GetCurrentItem()
-		dstr, _ := calendar.GetItemText(i)
+		_, dstr := calendar.GetItemText(i)
 		date, err := time.Parse("2006-01-02", dstr)
 		if err != nil {
 			errHandler(err)
