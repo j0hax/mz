@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -62,12 +61,12 @@ func startApp(selected string) {
 	// If the selected mensa has changed, load its opening dates
 	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		// Fetch canteen
-		c, err := openmensa.GetCanteen(index + 1)
+		c, err := openmensa.SearchCanteens(mainText)
 		if err != nil {
 			errs <- err
 		}
 
-		currentMensa = c
+		currentMensa = &c[0]
 
 		// Set calendar data
 		days, err := currentMensa.Days()
@@ -97,9 +96,11 @@ func startApp(selected string) {
 			}
 		}
 
-		// If there are no open dates, send a warning
+		// If there are no open dates, remove meal data
 		if calendar.GetItemCount() == 0 {
-			errs <- errors.New("canteen is closed on all days")
+			menuList.Clear()
+			priceTable.Clear()
+			notesView.Clear()
 		} else {
 			config.SaveLastCanteen(currentMensa.Name)
 		}
