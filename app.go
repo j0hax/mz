@@ -14,8 +14,8 @@ import (
 	"golang.org/x/text/language"
 )
 
-var notesView *tview.TextView
 var currentMensa *openmensa.Canteen
+var errs = make(chan error, 1)
 
 // Generic title case
 var titler = cases.Title(language.Und)
@@ -23,6 +23,8 @@ var titler = cases.Title(language.Und)
 func startApp(selected string) {
 	app := tview.NewApplication()
 	app.EnableMouse(true)
+
+	pages := tview.NewPages()
 
 	mainView := tview.NewFlex()
 
@@ -34,7 +36,7 @@ func startApp(selected string) {
 	menuList := tview.NewList()
 	menuList.SetBorder(true).SetTitle("Menu")
 
-	notesView = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
+	notesView := tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 
 	priceTable := tview.NewTable()
 
@@ -59,13 +61,10 @@ func startApp(selected string) {
 
 	// If the selected mensa has changed, load its opening dates
 	mensaList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		menuList.Clear()
-		calendar.Clear()
-
 		// Fetch canteen
 		c, err := openmensa.GetCanteen(index + 1)
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		currentMensa = c
@@ -73,7 +72,7 @@ func startApp(selected string) {
 		// Set calendar data
 		days, err := currentMensa.Days()
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		calendar.Clear()
@@ -100,7 +99,7 @@ func startApp(selected string) {
 
 		// If there are no open dates, send a warning
 		if calendar.GetItemCount() == 0 {
-			errHandler(errors.New("canteen is closed on all days"))
+			errs <- errors.New("canteen is closed on all days")
 		} else {
 			config.SaveLastCanteen(currentMensa.Name)
 		}
@@ -108,17 +107,15 @@ func startApp(selected string) {
 
 	// If the selected date has changed, load the meals for that date
 	calendar.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		menuList.Clear()
-
 		// Load meals for the changed date
 		date, err := time.Parse("2006-01-02", secondaryText)
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		meals, err := currentMensa.MealsOn(date)
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		menuList.Clear()
@@ -141,12 +138,12 @@ func startApp(selected string) {
 		_, dstr := calendar.GetItemText(i)
 		date, err := time.Parse("2006-01-02", dstr)
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		meals, err := currentMensa.MealsOn(date)
 		if err != nil {
-			errHandler(err)
+			errs <- err
 		}
 
 		// Set details for the selected meal
@@ -168,7 +165,7 @@ func startApp(selected string) {
 	})
 
 	// Load list of canteens
-	loadCanteens(mensaList)
+	loadCanteens(app, mensaList)
 
 	// Set the newly populated list back to the last viewed
 	if len(selected) > 1 {
@@ -176,7 +173,10 @@ func startApp(selected string) {
 		mensaList.SetCurrentItem(matches[0])
 	}
 
-	if err := app.SetRoot(mainView, true).SetFocus(mensaList).Run(); err != nil {
+	go errWatcher(app, pages, errs)
+	pages.AddPage("mz", mainView, true, true)
+
+	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
 	}
 }
