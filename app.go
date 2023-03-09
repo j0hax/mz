@@ -13,8 +13,11 @@ import (
 	"golang.org/x/text/language"
 )
 
-var currentMensa *openmensa.Canteen
+// errs serves as a delegation for errors
 var errs = make(chan error, 1)
+
+// availMenus stores the currently available dates and meals of a canteen
+var availMenus []openmensa.Menu
 
 // Generic title case
 var titler = cases.Title(language.Und)
@@ -66,61 +69,43 @@ func startApp(selected string) {
 			errs <- err
 		}
 
-		currentMensa = &c[0]
+		mensa := c[0]
 
-		// Set calendar data
-		days, err := currentMensa.Days()
+		// Fetch the upcoming Speisepläne
+		menus, err := mensa.AllMenus()
 		if err != nil {
 			errs <- err
+		} else {
+			availMenus = menus
 		}
 
 		calendar.Clear()
+		menuList.Clear()
+		priceTable.Clear()
+		notesView.Clear()
+
 		today := time.Now().Truncate(24 * time.Hour)
-		for _, d := range days {
-			if !d.Closed {
-
-				// Giga big brain hack: instead of saving the selected date as a global variable,
-				// set the hidden secondary text to a format that can easily be parsed back :)
-				dstr := d.Date.String()
-
-				// Add a nice date
-				date := time.Time(d.Date)
-				var desc string
-				if today.Equal(date) {
-					desc = "Today"
-				} else {
-					desc = date.Format("Monday, January 2")
-				}
-
-				calendar.AddItem(desc, dstr, 0, nil)
+		for _, menu := range menus {
+			date := time.Time(menu.Day.Date)
+			var desc string
+			if today.Equal(date) {
+				desc = "Today"
+			} else {
+				desc = date.Format("Monday, January 2")
 			}
+
+			calendar.AddItem(desc, "", 0, nil)
 		}
 
-		// If there are no open dates, remove meal data
-		if calendar.GetItemCount() == 0 {
-			menuList.Clear()
-			priceTable.Clear()
-			notesView.Clear()
-		} else {
-			config.SaveLastCanteen(currentMensa.Name)
+		if len(menus) > 0 {
+			config.SaveLastCanteen(mensa.Name)
 		}
 	})
 
 	// If the selected date has changed, load the meals for that date
 	calendar.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		// Load meals for the changed date
-		date, err := time.Parse("2006-01-02", secondaryText)
-		if err != nil {
-			errs <- err
-		}
-
-		meals, err := currentMensa.MealsOn(date)
-		if err != nil {
-			errs <- err
-		}
-
 		menuList.Clear()
-		for i, m := range meals {
+		for i, m := range availMenus[index].Meals {
 			shortcut := rune(0)
 			if i < 9 {
 				shortcut = rune('1' + i)
@@ -134,21 +119,9 @@ func startApp(selected string) {
 
 	// If the selected menu has changed, load details for that menu
 	menuList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		// Load meals for the selected date
-		i := calendar.GetCurrentItem()
-		_, dstr := calendar.GetItemText(i)
-		date, err := time.Parse("2006-01-02", dstr)
-		if err != nil {
-			errs <- err
-		}
-
-		meals, err := currentMensa.MealsOn(date)
-		if err != nil {
-			errs <- err
-		}
-
 		// Set details for the selected meal
-		meal := meals[index]
+		menuIndex := calendar.GetCurrentItem()
+		meal := availMenus[menuIndex].Meals[index]
 
 		notesView.SetText(strings.Join(meal.Notes, ", "))
 

@@ -23,6 +23,8 @@ func loadCanteens(app *tview.Application, list *tview.List) {
 	}
 }
 
+//func mensaSelect(app *tview.Application, mensaSelected <-chan string,)
+
 // errWatcher waits for an error on ec.
 // These errors can be dismissed "ignored," so they should not be used in situations
 // where the program can not continue.
