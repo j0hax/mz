@@ -31,6 +31,9 @@ var priceTable = tview.NewTable()
 // notesView shows individual details of a meal
 var notesView = tview.NewTextView()
 
+// titleView displays a small status bar at the bottom of the screen
+var titleView = tview.NewTextView()
+
 func startApp(selected string) {
 	app := tview.NewApplication()
 
@@ -39,18 +42,17 @@ func startApp(selected string) {
 	pages := tview.NewPages()
 
 	setupLayout(pages)
-
-	mensaList.SetChangedFunc(mensaSelected)
-
-	calendar.SetChangedFunc(dateSelected)
-
-	menuList.SetChangedFunc(mealSelected)
+	setTitle("mz")
 
 	// Display error modal if needed
 	go errWatcher(app, pages, errs)
 
 	// Load list of canteens
 	go loadCanteens(app, mensaList, selected)
+
+	mensaList.SetSelectedFunc(mensaSelected)
+	calendar.SetChangedFunc(dateSelected)
+	menuList.SetChangedFunc(mealSelected)
 
 	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)

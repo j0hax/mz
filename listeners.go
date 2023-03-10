@@ -55,6 +55,8 @@ func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 	if len(menus) > 0 {
 		config.SaveLastCanteen(mensa.Name)
 	}
+
+	setTitle(mensa.Name)
 }
 
 // If the selected date has changed, load the meals for that date

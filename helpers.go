@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
@@ -85,4 +86,11 @@ func errWatcher(app *tview.Application, pages *tview.Pages, ec <-chan error) {
 			app.SetFocus(modal)
 		})
 	}
+}
+
+// Sets a cool title at the top of the page
+func setTitle(title string) {
+	wide := strings.Join(strings.Split(title, ""), " ")
+	t := fmt.Sprintf("[::i]%s[-:-:-]", wide)
+	titleView.SetText(t)
 }
