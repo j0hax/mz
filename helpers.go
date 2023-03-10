@@ -29,7 +29,7 @@ func loadCanteens(app *tview.Application, list *tview.List) {
 // These errors can be dismissed "ignored," so they should not be used in situations
 // where the program can not continue.
 func errWatcher(app *tview.Application, pages *tview.Pages, ec <-chan error) {
-	// Create an error page
+	// Create an error modal
 	modal := tview.NewModal()
 	modal.SetBackgroundColor(tcell.ColorDarkRed)
 	modal.AddButtons([]string{"Dismiss", "Quit"})
@@ -41,14 +41,17 @@ func errWatcher(app *tview.Application, pages *tview.Pages, ec <-chan error) {
 		}
 	})
 
-	pages.AddPage("error", modal, false, false)
+	// Add the error modal to our pages, but don't show it
+	app.QueueUpdateDraw(func() {
+		pages.AddPage("error", modal, false, false)
+	})
 
 	// Wait for errors
 	for e := range ec {
 		message := fmt.Sprintf("Error:\n%s", e)
-		modal.SetText(message)
-		pages.ShowPage("error")
 		app.QueueUpdateDraw(func() {
+			modal.SetText(message)
+			pages.ShowPage("error")
 			app.SetFocus(modal)
 		})
 	}
