@@ -7,6 +7,7 @@ import (
 
 // setupLayout adds a layout and component primitives to the pages
 func setupLayout(pages *tview.Pages) {
+	appView := tview.NewFlex().SetDirection(tview.FlexRow)
 	mainView := tview.NewFlex()
 
 	mensaArea := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -35,5 +36,10 @@ func setupLayout(pages *tview.Pages) {
 	mainView.AddItem(mensaArea, 0, 1, true)
 	mainView.AddItem(menuArea, 0, 2, false)
 
-	pages.AddPage("mz", mainView, true, true)
+	titleView.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
+
+	appView.AddItem(titleView, 1, 0, false)
+	appView.AddItem(mainView, 0, 1, true)
+
+	pages.AddPage("mz", appView, true, true)
 }
