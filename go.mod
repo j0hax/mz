@@ -6,7 +6,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/j0hax/go-openmensa v0.4.0
 	github.com/rivo/tview v0.0.0-20220801133142-711ef394f9b3
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 )
 
 require (
