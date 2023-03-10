@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -128,18 +129,15 @@ func startApp(selected string) {
 		menuIndex := calendar.GetCurrentItem()
 		meal := availMenus[menuIndex].Meals[index]
 
-		notesView.SetText(strings.Join(meal.Notes, ", "))
+		sort.Strings(meal.Notes)
+		notesView.SetText(strings.Join(meal.Notes, "; "))
 
-		// Set prices
-		var row int
-		for k, v := range meal.Prices {
-			if v == 0 {
-				continue
-			}
-			priceTable.SetCellSimple(row, 0, k)
-			price := fmt.Sprintf("%.2f€", v)
-			priceTable.SetCell(row, 1, tview.NewTableCell(price).SetAlign(tview.AlignRight).SetExpansion(1))
-			row = row + 1
+		// Set prices in ascending order
+
+		for i, k := range priceSort(meal.Prices) {
+			priceTable.SetCellSimple(i, 0, k)
+			price := fmt.Sprintf("%.2f€", meal.Prices[k])
+			priceTable.SetCell(i, 1, tview.NewTableCell(price).SetAlign(tview.AlignRight).SetExpansion(1))
 		}
 	})
 

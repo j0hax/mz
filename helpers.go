@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
@@ -23,7 +24,24 @@ func loadCanteens(app *tview.Application, list *tview.List) {
 	}
 }
 
-//func mensaSelect(app *tview.Application, mensaSelected <-chan string,)
+// priceSort returns the keys in the ascending order
+// of their mapped values. The keys for zero values are not included.
+func priceSort(prices map[string]float64) []string {
+	// Copy map keys
+	keys := make([]string, 0, len(prices))
+	for key := range prices {
+		if prices[key] > 0 {
+			keys = append(keys, key)
+		}
+	}
+
+	// Sort map keys by value
+	sort.SliceStable(keys, func(i, j int) bool {
+		return prices[keys[i]] < prices[keys[j]]
+	})
+
+	return keys
+}
 
 // errWatcher waits for an error on ec.
 // These errors can be dismissed "ignored," so they should not be used in situations
