@@ -46,18 +46,11 @@ func startApp(selected string) {
 
 	menuList.SetChangedFunc(mealSelected)
 
+	// Display error modal if needed
 	go errWatcher(app, pages, errs)
 
 	// Load list of canteens
-	loadCanteens(app, mensaList)
-
-	// Set the newly populated list back to the last viewed
-	if len(selected) > 1 {
-		matches := mensaList.FindItems(selected, "", true, true)
-		if len(matches) > 0 {
-			mensaList.SetCurrentItem(matches[0])
-		}
-	}
+	go loadCanteens(app, mensaList, selected)
 
 	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
 		panic(err)
