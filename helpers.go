@@ -12,7 +12,7 @@ import (
 // loadCanteens retrieves canteens and populates the passed list with them.
 //
 // Currently, name and adress are loaded without further configuration.
-func loadCanteens(app *tview.Application, list *tview.List) {
+func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 	mensas, err := openmensa.AllCanteens()
 	if err != nil {
 		errs <- err
@@ -20,7 +20,19 @@ func loadCanteens(app *tview.Application, list *tview.List) {
 	}
 
 	for _, m := range mensas {
-		list.AddItem(m.Name, m.Address, 0, nil)
+		app.QueueUpdate(func() {
+			list.AddItem(m.Name, m.Address, 0, nil)
+		})
+	}
+
+	// Set the newly populated list back to the last viewed
+	if len(selected) > 1 {
+		matches := mensaList.FindItems(selected, "", true, true)
+		if len(matches) > 0 {
+			app.QueueUpdateDraw(func() {
+				mensaList.SetCurrentItem(matches[0])
+			})
+		}
 	}
 }
 
