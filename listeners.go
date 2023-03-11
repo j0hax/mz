@@ -6,7 +6,10 @@ import (
 
 	"github.com/j0hax/go-openmensa"
 	"github.com/j0hax/mz/config"
+	"github.com/rivo/tview"
 )
+
+const bullet = '\u2022'
 
 // If the selected mensa has changed, load its opening dates
 func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
@@ -81,17 +84,16 @@ func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
 	// Add prices
 	for _, k := range priceSort(meal.Prices) {
 		group := titler.String(k)
-		infoTable.SetCellSimple(row, 0, group)
+		infoTable.SetCell(row, 0, tview.NewTableCell(group).SetExpansion(1))
 		price := fmt.Sprintf("%.2f€", meal.Prices[k])
-		infoTable.SetCellSimple(row, 1, price)
+		infoTable.SetCell(row, 1, tview.NewTableCell(price).SetAlign(tview.AlignRight))
 		row = row + 1
 	}
 
 	// Add notes
-	for i, n := range meal.Notes {
-		num := fmt.Sprintf("Note %d", i+1)
-		infoTable.SetCellSimple(row, 0, num)
-		infoTable.SetCellSimple(row, 1, n)
+	for _, n := range meal.Notes {
+		note := fmt.Sprintf("%c %s", bullet, n)
+		infoTable.SetCell(row, 0, tview.NewTableCell(note).SetExpansion(1))
 		row = row + 1
 	}
 
