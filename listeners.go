@@ -2,13 +2,10 @@ package main
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/j0hax/go-openmensa"
 	"github.com/j0hax/mz/config"
-	"github.com/rivo/tview"
 )
 
 // If the selected mensa has changed, load its opening dates
@@ -36,8 +33,7 @@ func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 
 	calendar.Clear()
 	menuList.Clear()
-	priceTable.Clear()
-	notesView.Clear()
+	infoTable.Clear()
 
 	today := time.Now().Truncate(24 * time.Hour)
 	for _, menu := range menus {
@@ -80,14 +76,23 @@ func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
 	menuIndex := calendar.GetCurrentItem()
 	meal := availMenus[menuIndex].Meals[index]
 
-	sort.Strings(meal.Notes)
-	notesView.SetText(strings.Join(meal.Notes, "; "))
+	var row int
 
-	// Set prices in ascending order
-
-	for i, k := range priceSort(meal.Prices) {
-		priceTable.SetCellSimple(i, 0, k)
+	// Add prices
+	for _, k := range priceSort(meal.Prices) {
+		infoTable.SetCellSimple(row, 0, k)
 		price := fmt.Sprintf("%.2f€", meal.Prices[k])
-		priceTable.SetCell(i, 1, tview.NewTableCell(price).SetAlign(tview.AlignRight).SetExpansion(1))
+		infoTable.SetCellSimple(row, 1, price)
+		row = row + 1
 	}
+
+	// Add notes
+	for i, n := range meal.Notes {
+		num := fmt.Sprintf("Note %d", i+1)
+		infoTable.SetCellSimple(row, 0, num)
+		infoTable.SetCellSimple(row, 1, n)
+		row = row + 1
+	}
+
+	infoTable.ScrollToBeginning()
 }
