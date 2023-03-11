@@ -57,6 +57,18 @@ func priceSort(prices map[string]float64) []string {
 	return keys
 }
 
+// colorize sets the color of a table cell depending on the text it contains.
+// For example, a vegan meal may be colored green.
+func colorize(cell *tview.TableCell) {
+	text := strings.ToLower(cell.Text)
+
+	if strings.Contains(text, "veg") {
+		cell.SetTextColor(tcell.ColorGreen)
+	}
+
+	// Todo: find more nice things to colorize
+}
+
 // errWatcher waits for an error on ec.
 // These errors can be dismissed "ignored," so they should not be used in situations
 // where the program can not continue.

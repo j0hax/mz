@@ -93,7 +93,9 @@ func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
 	// Add notes
 	for _, n := range meal.Notes {
 		note := fmt.Sprintf("%c %s", bullet, n)
-		infoTable.SetCell(row, 0, tview.NewTableCell(note).SetExpansion(1))
+		cell := tview.NewTableCell(note).SetExpansion(1)
+		colorize(cell)
+		infoTable.SetCell(row, 0, cell)
 		row = row + 1
 	}
 
