@@ -33,6 +33,7 @@ func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 			app.QueueUpdateDraw(func() {
 				mensaList.SetCurrentItem(matches[0])
 			})
+			app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 		}
 	}
 }
