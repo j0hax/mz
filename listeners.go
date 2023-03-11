@@ -80,7 +80,8 @@ func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
 
 	// Add prices
 	for _, k := range priceSort(meal.Prices) {
-		infoTable.SetCellSimple(row, 0, k)
+		group := titler.String(k)
+		infoTable.SetCellSimple(row, 0, group)
 		price := fmt.Sprintf("%.2f€", meal.Prices[k])
 		infoTable.SetCellSimple(row, 1, price)
 		row = row + 1
