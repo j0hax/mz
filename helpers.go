@@ -27,15 +27,15 @@ func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 	}
 
 	// Set the newly populated list back to the last viewed
-	if len(selected) > 1 {
-		matches := mensaList.FindItems(selected, "", true, true)
-		if len(matches) > 0 {
-			app.QueueUpdateDraw(func() {
-				mensaList.SetCurrentItem(matches[0])
-			})
-			app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
-		}
+	index := 0
+	matches := mensaList.FindItems(selected, "", true, true)
+	if len(matches) > 0 {
+		index = matches[0]
 	}
+	app.QueueUpdate(func() {
+		mensaList.SetCurrentItem(index)
+	})
+	app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 }
 
 // priceSort returns the keys in the ascending order
