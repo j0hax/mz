@@ -36,5 +36,7 @@ func setupLayout(app *tview.Application, pages *tview.Pages) {
 	appView.AddItem(titleView, 1, 0, false)
 	appView.AddItem(mainView, 0, 1, true)
 
+	setupKeybinds(app, mensaArea, menuArea)
+
 	pages.AddPage("mz", appView, true, true)
 }
