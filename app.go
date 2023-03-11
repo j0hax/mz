@@ -25,23 +25,19 @@ var calendar = tview.NewList()
 // menuList displays all meals served by a canteen on a given day
 var menuList = tview.NewList()
 
-// priceTable shows prices of a selected meal
-var priceTable = tview.NewTable()
-
-// notesView shows individual details of a meal
-var notesView = tview.NewTextView()
+// infoTable shows prices of a selected meal
+var infoTable = tview.NewTable()
 
 // titleView displays a small status bar at the bottom of the screen
 var titleView = tview.NewTextView()
 
 func startApp(selected string) {
 	app := tview.NewApplication()
-
 	app.EnableMouse(true)
 
 	pages := tview.NewPages()
 
-	setupLayout(pages)
+	setupLayout(app, pages)
 	setTitle("mz")
 
 	// Display error modal if needed
@@ -54,7 +50,7 @@ func startApp(selected string) {
 	calendar.SetChangedFunc(dateSelected)
 	menuList.SetChangedFunc(mealSelected)
 
-	if err := app.SetRoot(pages, true).SetFocus(mensaList).Run(); err != nil {
+	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
 	}
 }
