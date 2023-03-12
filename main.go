@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/j0hax/mz/config"
 )
@@ -12,14 +14,33 @@ import (
 // Flags set by goreleaser
 var (
 	version = "dev"
-	commit  = "none"
-	date    = "unknown"
+	commit  = ""
+	date    = ""
 )
 
 func customUsage() {
 	out := flag.CommandLine.Output()
 	fmt.Fprintf(out, "Usage: %s [OPTIONS] [CANTEEN NAME]\n", os.Args[0])
 	flag.PrintDefaults()
+}
+
+func versionString() string {
+	var shortCommit string
+	if len(commit) > 0 {
+		shortCommit = commit[0:7]
+	} else {
+		shortCommit = strings.Repeat("-", 7)
+	}
+
+	var shortDate string
+	date, err := time.Parse(time.RFC3339, date)
+	if err != nil {
+		shortDate = "YYYY-MM-DD"
+	} else {
+		shortDate = date.Format(time.DateOnly)
+	}
+
+	return fmt.Sprintf("mz %s (commit %s, built %s)", version, shortCommit, shortDate)
 }
 
 func main() {
@@ -41,7 +62,7 @@ func main() {
 
 	if *vflag {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "mz %s (commit %s, built %s)\n", version, commit, date)
+		fmt.Fprintf(out, "%s\n", versionString())
 		os.Exit(0)
 	}
 
