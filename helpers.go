@@ -50,7 +50,7 @@ func priceSort(prices map[string]float64) []string {
 	}
 
 	// Sort map keys by value
-	sort.SliceStable(keys, func(i, j int) bool {
+	sort.Slice(keys, func(i, j int) bool {
 		return prices[keys[i]] < prices[keys[j]]
 	})
 
