@@ -1,5 +1,5 @@
 # mz
-
+[![Go](https://github.com/j0hax/mz/actions/workflows/go.yml/badge.svg)](https://github.com/j0hax/mz/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/j0hax/mz)](https://goreportcard.com/report/github.com/j0hax/mz)
 
 `mz` is a command-line canteen browser using [OpenMensa](https://openmensa.org).
