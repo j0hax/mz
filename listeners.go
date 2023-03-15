@@ -84,6 +84,8 @@ func dateSelected(index int, mainText, secondaryText string, shortcut rune) {
 
 // If the selected menu has changed, load details for that menu
 func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
+	infoTable.Clear()
+
 	// Set details for the selected meal
 	meal := availMenus[dateIndex].Meals[index]
 
