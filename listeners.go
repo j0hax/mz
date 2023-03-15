@@ -11,6 +11,12 @@ import (
 
 const bullet = '\u2022'
 
+// dateIndex musste be used to store the calendar state:
+//
+// When mealSelected loads menu data, the previously used
+// function calendar.GetCurrentItem() still reported the old index.
+var dateIndex int
+
 // If the selected mensa has changed, load its opening dates
 func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 	// Fetch canteen
@@ -60,6 +66,9 @@ func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 
 // If the selected date has changed, load the meals for that date
 func dateSelected(index int, mainText, secondaryText string, shortcut rune) {
+	// Update state ASAP
+	dateIndex = index
+
 	menuList.Clear()
 	for i, m := range availMenus[index].Meals {
 		shortcut := rune(0)
@@ -75,9 +84,10 @@ func dateSelected(index int, mainText, secondaryText string, shortcut rune) {
 
 // If the selected menu has changed, load details for that menu
 func mealSelected(index int, mainText, secondaryText string, shortcut rune) {
+	infoTable.Clear()
+
 	// Set details for the selected meal
-	menuIndex := calendar.GetCurrentItem()
-	meal := availMenus[menuIndex].Meals[index]
+	meal := availMenus[dateIndex].Meals[index]
 
 	var row int
 
