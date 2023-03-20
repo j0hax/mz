@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gdamore/tcell/v2 v2.6.0
-	github.com/j0hax/go-openmensa v1.0.2
+	github.com/j0hax/go-openmensa v1.0.3
 	github.com/rivo/tview v0.0.0-20230307144320-cc10b288e304
 	golang.org/x/text v0.8.0
 )
