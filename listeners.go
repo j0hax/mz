@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/j0hax/go-openmensa"
-	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 )
 
@@ -58,7 +57,7 @@ func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 	}
 
 	if len(menus) > 0 {
-		config.SaveLastCanteen(mensa.Name)
+		cfg.Last.Name = mensa.Name
 	}
 
 	setTitle(mensa.Name)

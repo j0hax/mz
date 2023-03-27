@@ -2,74 +2,89 @@
 package config
 
 import (
-	"errors"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
-// GetCacheFile returns the path of mz's cache file.
+// The base name of mz's configuration file
+const configFileName = "config.toml"
+
+// Saved program state
+type last struct {
+	Name string
+}
+
+// Configuration allows for saving program configuraiton and settings
+type Configuration struct {
+	Last last
+}
+
+// Save writes the configuration to disk
+func (s *Configuration) Save() error {
+	file, err := GetSettingsFile()
+	if err != nil {
+		return err
+	}
+
+	dat, err := toml.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(file, dat, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetSettingsFile returns the path of mz's cache file.
 // The file and its parent directories may not exist.
-func GetCacheFile() (string, error) {
-	cacheDir, err := os.UserCacheDir()
+func GetSettingsFile() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil && !os.IsExist(err) {
+		return "", err
+	}
+
+	folder := filepath.Join(configDir, "mz")
+
+	err = os.MkdirAll(folder, 0755)
 	if err != nil {
 		return "", err
 	}
 
-	cacheFile := filepath.Join(cacheDir, "mz")
+	configPath := filepath.Join(folder, configFileName)
 
-	return cacheFile, nil
+	return configPath, nil
 }
 
-// ResetLastCanteen removes the file containing the last saved canteen
-func ResetLastCanteen() error {
-	file, err := GetCacheFile()
+// LoadConfig attempts to load the existing configuration file.
+// If an error occurs (i.e. the configuration file does not exist)
+// an empty configuration struct is returned.
+func LoadConfig() *Configuration {
+	var s Configuration
+
+	file, err := GetSettingsFile()
 	if err != nil {
-		return err
-	}
-
-	err = os.Remove(file)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// SaveLastCanteen saves the name of the last viewed cantine.
-func SaveLastCanteen(name string) error {
-	file, err := GetCacheFile()
-	if err != nil {
-		return err
-	}
-
-	dat := []byte(name)
-
-	err = os.WriteFile(file, dat, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return nil
-}
-
-// GetLastCanteen returns the name of the last viewed canteen.
-// If an error occurs or the mensa is not found, an empty string will be returned.
-func GetLastCanteen() string {
-	file, err := GetCacheFile()
-	if err != nil {
-		log.Print(err)
-		return ""
+		log.Println(err)
+		return &s
 	}
 
 	dat, err := os.ReadFile(file)
 	if err != nil {
-		// Ignore missing files
-		if !errors.Is(err, os.ErrNotExist) {
-			log.Print(err)
-		}
-		return ""
+		log.Println(err)
+		return &s
 	}
 
-	return string(dat)
+	err = toml.Unmarshal(dat, &s)
+	if err != nil {
+		log.Println(err)
+		return &s
+	}
+
+	return &s
 }

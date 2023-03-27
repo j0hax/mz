@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/j0hax/mz/config"
@@ -14,9 +12,12 @@ import (
 // Flags set by goreleaser
 var (
 	version = "dev"
-	commit  = ""
-	date    = ""
+	commit  = "-"
+	date    = "-"
 )
+
+// Our Save State object
+var cfg = config.LoadConfig()
 
 func customUsage() {
 	out := flag.CommandLine.Output()
@@ -25,17 +26,15 @@ func customUsage() {
 }
 
 func versionString() string {
-	var shortCommit string
-	if len(commit) > 0 {
+	shortCommit := commit
+	if len(commit) > 8 {
 		shortCommit = commit[0:7]
-	} else {
-		shortCommit = strings.Repeat("-", 7)
 	}
 
 	var shortDate string
 	date, err := time.Parse(time.RFC3339, date)
 	if err != nil {
-		shortDate = "YYYY-MM-DD"
+		shortDate = "unknown"
 	} else {
 		shortDate = date.Format(time.DateOnly)
 	}
@@ -52,12 +51,7 @@ func main() {
 	flag.Parse()
 
 	if *reset {
-		out := flag.CommandLine.Output()
-		err := config.ResetLastCanteen()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprint(out, "Reset last canteen.\n")
+		cfg.Last.Name = ""
 	}
 
 	if *vflag {
@@ -66,12 +60,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	mensa := flag.Arg(0)
-
-	// Try retrieving the last canteen if it hasn't been set
-	if len(mensa) == 0 {
-		mensa = config.GetLastCanteen()
+	// Load the mensa from CLI args, otherwise from config
+	var mensa string
+	if len(flag.Args()) > 0 {
+		mensa = flag.Arg(0)
+	} else {
+		mensa = cfg.Last.Name
 	}
+
+	// Write the config to disk at the end
+	defer cfg.Save()
 
 	startApp(mensa)
 }
