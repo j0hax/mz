@@ -5,8 +5,8 @@ import (
 	"github.com/rivo/tview"
 )
 
-func setupKeybinds(app *tview.Application, mensaArea *tview.Flex, menuArea *tview.Flex) {
-	// Switch between left and right
+// switchPanels allows for moving between the four main panels by pressing tab
+func switchPanels(app *tview.Application, mensaArea *tview.Flex, menuArea *tview.Flex) {
 	mensaList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == '\t' {
 			app.SetFocus(calendar)
@@ -42,6 +42,25 @@ func setupKeybinds(app *tview.Application, mensaArea *tview.Flex, menuArea *tvie
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' {
 			app.Stop()
+		}
+		return event
+	})
+}
+
+func setupKeybinds(app *tview.Application, mensaArea *tview.Flex, menuArea *tview.Flex) {
+	switchPanels(app, mensaArea, menuArea)
+
+	// Allow for favoriting a canteen
+	mensaList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'f' {
+			i := mensaList.GetCurrentItem()
+			name, _ := mensaList.GetItemText(i)
+			for _, v := range cfg.Favorites {
+				if name == v {
+					cfg.Favorites = append(slice[:s], slice[s+1:]...)
+				}
+			}
+			cfg.Favorites = append(cfg.Favorites, name)
 		}
 		return event
 	})

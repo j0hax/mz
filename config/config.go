@@ -19,7 +19,8 @@ type last struct {
 
 // Configuration allows for saving program configuraiton and settings
 type Configuration struct {
-	Last last
+	Last      last
+	Favorites []string
 }
 
 // Save writes the configuration to disk

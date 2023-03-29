@@ -21,8 +21,15 @@ func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 	}
 
 	for _, m := range mensas {
+		index := -1
+		for _, v := range cfg.Favorites {
+			if m.Name == v {
+				index = 0
+			}
+		}
 		app.QueueUpdate(func() {
-			list.AddItem(m.Name, m.Address, 0, nil)
+			//list.AddItem(m.Name, m.Address, 0, nil)
+			list.InsertItem(index, m.Name, m.Address, 0, nil)
 		})
 	}
 
