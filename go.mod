@@ -7,7 +7,7 @@ require (
 	github.com/j0hax/go-openmensa v1.0.3
 	github.com/pelletier/go-toml/v2 v2.0.9
 	github.com/rivo/tview v0.0.0-20230325211341-281d14d896d7
-	golang.org/x/text v0.12.0
+	golang.org/x/text v0.13.0
 )
 
 require (
