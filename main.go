@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/j0hax/mz/app"
 	"github.com/j0hax/mz/config"
 )
 
@@ -61,15 +62,12 @@ func main() {
 	}
 
 	// Load the mensa from CLI args, otherwise from config
-	var mensa string
 	if len(flag.Args()) > 0 {
-		mensa = flag.Arg(0)
-	} else {
-		mensa = cfg.Last.Name
+		cfg.Last.Name = flag.Arg(0)
 	}
 
 	// Write the config to disk at the end
 	defer cfg.Save()
 
-	startApp(mensa)
+	app.StartApp(cfg)
 }

@@ -1,7 +1,8 @@
-package main
+package app
 
 import (
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -31,7 +32,11 @@ var infoTable = tview.NewTable()
 // titleView displays a text title at the top of the screen
 var titleView = tview.NewTextView()
 
-func startApp(selected string) {
+var cfg *config.Configuration
+
+func StartApp(config *config.Configuration) {
+	cfg = config
+
 	app := tview.NewApplication()
 	app.EnableMouse(true)
 
@@ -44,7 +49,7 @@ func startApp(selected string) {
 	go errWatcher(app, pages, errs)
 
 	// Load list of canteens
-	go loadCanteens(app, mensaList, selected)
+	go loadCanteens(app, mensaList, cfg.Last.Name)
 
 	mensaList.SetSelectedFunc(mensaSelected)
 	calendar.SetChangedFunc(dateSelected)
