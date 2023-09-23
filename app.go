@@ -28,7 +28,7 @@ var menuList = tview.NewList()
 // infoTable shows prices of a selected meal
 var infoTable = tview.NewTable()
 
-// titleView displays a small status bar at the bottom of the screen
+// titleView displays a text title at the top of the screen
 var titleView = tview.NewTextView()
 
 func startApp(selected string) {
