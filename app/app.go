@@ -11,6 +11,8 @@ import (
 // errs serves as a delegation for errors
 var errs = make(chan error, 1)
 
+var mensas = make(chan string)
+
 // availMenus stores the currently available dates and meals of a canteen
 var availMenus []openmensa.Menu
 
@@ -35,7 +37,6 @@ var titleView = tview.NewTextView()
 // statusBar displays a small bar at the bottom of the application
 var statusBar = tview.NewInputField()
 
-
 var cfg *config.Configuration
 
 func StartApp(config *config.Configuration) {
@@ -51,6 +52,8 @@ func StartApp(config *config.Configuration) {
 
 	// Display error modal if needed
 	go errWatcher(app, pages, errs)
+
+	go mealLoader(app, mensas)
 
 	// Load list of canteens
 	go loadCanteens(app, mensaList, cfg.Last.Name)

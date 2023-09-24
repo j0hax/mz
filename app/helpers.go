@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
@@ -14,6 +15,7 @@ import (
 //
 // Currently, name and adress are loaded without further configuration.
 func loadCanteens(app *tview.Application, list *tview.List, selected string) {
+	statusBar.SetPlaceholder("Loading Canteens...")
 	mensas, err := openmensa.AllCanteens()
 	if err != nil {
 		errs <- err
@@ -67,6 +69,55 @@ func colorize(cell *tview.TableCell) {
 	}
 
 	// Todo: find more nice things to colorize
+}
+
+// This is the function that loads mensa information asynchonously
+func mealLoader(app *tview.Application, mensaName <-chan string) {
+	for m := range mensaName {
+		c, err := openmensa.SearchCanteens(m)
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		if len(c) < 1 {
+			return
+		}
+
+		mensa := c[0]
+
+		// Fetch the upcoming Speisepläne
+		menus, err := mensa.AllMenus()
+		if err != nil {
+			errs <- err
+		} else {
+			availMenus = menus
+		}
+
+		today := time.Now().Truncate(24 * time.Hour)
+		for _, menu := range menus {
+			date := time.Time(menu.Day.Date)
+			var desc string
+			if today.Equal(date) {
+				desc = "Today"
+			} else {
+				desc = date.Format("Monday, January 2")
+			}
+
+			app.QueueUpdate(func() {
+				calendar.AddItem(desc, "", 0, nil)
+			})
+		}
+
+		app.QueueUpdateDraw(func() {
+			status := fmt.Sprintf("Loaded meals for %s.", mensa)
+			statusBar.SetPlaceholder(status)
+		})
+
+		if len(menus) > 0 {
+			cfg.Last.Name = mensa.Name
+		}
+	}
 }
 
 // errWatcher waits for an error on ec.
