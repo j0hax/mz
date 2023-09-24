@@ -32,6 +32,10 @@ var infoTable = tview.NewTable()
 // titleView displays a text title at the top of the screen
 var titleView = tview.NewTextView()
 
+// statusBar displays a small bar at the bottom of the application
+var statusBar = tview.NewInputField()
+
+
 var cfg *config.Configuration
 
 func StartApp(config *config.Configuration) {
