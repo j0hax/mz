@@ -17,17 +17,16 @@ var dateIndex int
 // If the selected mensa has changed, load its opening dates
 func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 	// Fetch canteen
-	status := fmt.Sprintf("Loading meals for %s...", mainText)
-	statusBar.SetPlaceholder(status)
-
 	calendar.Clear()
 	menuList.Clear()
 	infoTable.Clear()
 
 	select {
 	case mensas <- mainText:
+		statusBar.StartLoading(mainText)
 	default:
-		statusBar.SetPlaceholder("Buffer Full!")
+		// The channel is full: there are too many mensas selected for the goroutine to handle.
+		// noop.
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 //
 // Currently, name and adress are loaded without further configuration.
 func loadCanteens(app *tview.Application, list *tview.List, selected string) {
-	statusBar.SetPlaceholder("Loading Canteens...")
+	statusBar.StartLoading("all canteens")
 	mensas, err := openmensa.AllCanteens()
 	if err != nil {
 		errs <- err
@@ -38,6 +38,7 @@ func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 		mensaList.SetCurrentItem(index)
 	})
 	app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
+	statusBar.DoneLoading()
 }
 
 // priceSort returns the keys in the ascending order
@@ -109,14 +110,11 @@ func mealLoader(app *tview.Application, mensaName <-chan string) {
 			})
 		}
 
-		app.QueueUpdateDraw(func() {
-			status := fmt.Sprintf("Loaded meals for %s.", mensa)
-			statusBar.SetPlaceholder(status)
-		})
-
 		if len(menus) > 0 {
 			cfg.Last.Name = mensa.Name
 		}
+
+		statusBar.DoneLoading()
 	}
 }
 

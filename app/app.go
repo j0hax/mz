@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/app/statusbar"
 	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 	"golang.org/x/text/cases"
@@ -35,7 +36,7 @@ var infoTable = tview.NewTable()
 var titleView = tview.NewTextView()
 
 // statusBar displays a small bar at the bottom of the application
-var statusBar = tview.NewInputField()
+var statusBar *statusbar.StatusBar
 
 var cfg *config.Configuration
 
@@ -43,6 +44,9 @@ func StartApp(config *config.Configuration) {
 	cfg = config
 
 	app := tview.NewApplication()
+
+	statusBar = statusbar.NewStatusBar(app)
+
 	app.EnableMouse(true)
 
 	pages := tview.NewPages()
