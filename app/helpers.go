@@ -149,10 +149,3 @@ func errWatcher(app *tview.Application, pages *tview.Pages, ec <-chan error) {
 		})
 	}
 }
-
-// Sets a cool title at the top of the page
-func setTitle(title string) {
-	wide := strings.Join(strings.Split(title, ""), " ")
-	t := fmt.Sprintf("[::i]%s[-:-:-]", wide)
-	titleView.SetText(t)
-}

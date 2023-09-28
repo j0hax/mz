@@ -32,9 +32,6 @@ var menuList = tview.NewList()
 // infoTable shows prices of a selected meal
 var infoTable = tview.NewTable()
 
-// titleView displays a text title at the top of the screen
-var titleView = tview.NewTextView()
-
 // statusBar displays a small bar at the bottom of the application
 var statusBar *statusbar.StatusBar
 
@@ -52,7 +49,6 @@ func StartApp(config *config.Configuration) {
 	pages := tview.NewPages()
 
 	setupLayout(app, pages)
-	setTitle("mz")
 
 	// Display error modal if needed
 	go errWatcher(app, pages, errs)
