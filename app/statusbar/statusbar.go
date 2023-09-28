@@ -10,18 +10,19 @@ import (
 )
 
 type StatusBar struct {
-	app   *tview.Application
-	field *tview.InputField
-	done  chan bool
-	mutex sync.Mutex
+	app         *tview.Application
+	field       *tview.InputField
+	loadingDone chan bool
+	mutex       sync.Mutex
 }
 
 func NewStatusBar(application *tview.Application) *StatusBar {
 	i := tview.NewInputField()
 	i.SetDisabled(true)
 	return &StatusBar{
-		field: i,
-		app:   application,
+		app:         application,
+		field:       i,
+		loadingDone: make(chan bool),
 	}
 }
 
@@ -45,13 +46,12 @@ func (f *StatusBar) setMessage(items ...string) {
 // The animation stops as soon as DoneLoading is called.
 func (f *StatusBar) StartLoading(message string) {
 	f.setLabel("Loading")
-	f.done = make(chan bool)
 	go func() {
 		count := 0
 		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
-			case <-f.done:
+			case <-f.loadingDone:
 				ticker.Stop()
 				f.setLabel("Finished Loading")
 				f.setMessage(message)
@@ -70,7 +70,7 @@ func (f *StatusBar) StartLoading(message string) {
 // DoneLoading is called after calling StartLoading to indicate that the loading process has finished.
 func (f *StatusBar) DoneLoading() {
 	select {
-	case f.done <- true:
+	case f.loadingDone <- true:
 		return
 	default:
 		panic("Did not call StartLoading()!")
