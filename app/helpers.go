@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/j0hax/go-openmensa"
@@ -14,6 +15,7 @@ import (
 //
 // Currently, name and adress are loaded without further configuration.
 func loadCanteens(app *tview.Application, list *tview.List, selected string) {
+	statusBar.StartLoading("all canteens")
 	mensas, err := openmensa.AllCanteens()
 	if err != nil {
 		errs <- err
@@ -36,6 +38,7 @@ func loadCanteens(app *tview.Application, list *tview.List, selected string) {
 		mensaList.SetCurrentItem(index)
 	})
 	app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
+	statusBar.DoneLoading()
 }
 
 // priceSort returns the keys in the ascending order
@@ -69,6 +72,52 @@ func colorize(cell *tview.TableCell) {
 	// Todo: find more nice things to colorize
 }
 
+// This is the function that loads mensa information asynchonously
+func mealLoader(app *tview.Application, mensaName <-chan string) {
+	for m := range mensaName {
+		c, err := openmensa.SearchCanteens(m)
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		if len(c) < 1 {
+			return
+		}
+
+		mensa := c[0]
+
+		// Fetch the upcoming Speisepläne
+		menus, err := mensa.AllMenus()
+		if err != nil {
+			errs <- err
+		} else {
+			availMenus = menus
+		}
+
+		today := time.Now().Truncate(24 * time.Hour)
+		for _, menu := range menus {
+			date := time.Time(menu.Day.Date)
+			var desc string
+			if today.Equal(date) {
+				desc = "Today"
+			} else {
+				desc = date.Format("Monday, January 2")
+			}
+
+			app.QueueUpdate(func() {
+				calendar.AddItem(desc, "", 0, nil)
+			})
+		}
+
+		if len(menus) > 0 {
+			cfg.Last.Name = mensa.Name
+		}
+
+		statusBar.DoneLoading()
+	}
+}
+
 // errWatcher waits for an error on ec.
 // These errors can be dismissed "ignored," so they should not be used in situations
 // where the program can not continue.
@@ -99,11 +148,4 @@ func errWatcher(app *tview.Application, pages *tview.Pages, ec <-chan error) {
 			app.SetFocus(modal)
 		})
 	}
-}
-
-// Sets a cool title at the top of the page
-func setTitle(title string) {
-	wide := strings.Join(strings.Split(title, ""), " ")
-	t := fmt.Sprintf("[::i]%s[-:-:-]", wide)
-	titleView.SetText(t)
 }

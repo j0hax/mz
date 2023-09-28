@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/j0hax/go-openmensa"
+	"github.com/j0hax/mz/app/statusbar"
 	"github.com/j0hax/mz/config"
 	"github.com/rivo/tview"
 	"golang.org/x/text/cases"
@@ -10,6 +11,8 @@ import (
 
 // errs serves as a delegation for errors
 var errs = make(chan error, 1)
+
+var mensas = make(chan string)
 
 // availMenus stores the currently available dates and meals of a canteen
 var availMenus []openmensa.Menu
@@ -29,8 +32,8 @@ var menuList = tview.NewList()
 // infoTable shows prices of a selected meal
 var infoTable = tview.NewTable()
 
-// titleView displays a text title at the top of the screen
-var titleView = tview.NewTextView()
+// statusBar displays a small bar at the bottom of the application
+var statusBar *statusbar.StatusBar
 
 var cfg *config.Configuration
 
@@ -38,15 +41,19 @@ func StartApp(config *config.Configuration) {
 	cfg = config
 
 	app := tview.NewApplication()
+
+	statusBar = statusbar.NewStatusBar(app)
+
 	app.EnableMouse(true)
 
 	pages := tview.NewPages()
 
 	setupLayout(app, pages)
-	setTitle("mz")
 
 	// Display error modal if needed
 	go errWatcher(app, pages, errs)
+
+	go mealLoader(app, mensas)
 
 	// Load list of canteens
 	go loadCanteens(app, mensaList, cfg.Last.Name)

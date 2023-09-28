@@ -2,9 +2,7 @@ package app
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/j0hax/go-openmensa"
 	"github.com/rivo/tview"
 )
 
@@ -19,48 +17,17 @@ var dateIndex int
 // If the selected mensa has changed, load its opening dates
 func mensaSelected(index int, mainText, secondaryText string, shortcut rune) {
 	// Fetch canteen
-	c, err := openmensa.SearchCanteens(mainText)
-	if err != nil {
-		errs <- err
-		return
-	}
-
-	if len(c) < 1 {
-		return
-	}
-
-	mensa := c[0]
-
-	// Fetch the upcoming Speisepläne
-	menus, err := mensa.AllMenus()
-	if err != nil {
-		errs <- err
-	} else {
-		availMenus = menus
-	}
-
 	calendar.Clear()
 	menuList.Clear()
 	infoTable.Clear()
 
-	today := time.Now().Truncate(24 * time.Hour)
-	for _, menu := range menus {
-		date := time.Time(menu.Day.Date)
-		var desc string
-		if today.Equal(date) {
-			desc = "Today"
-		} else {
-			desc = date.Format("Monday, January 2")
-		}
-
-		calendar.AddItem(desc, "", 0, nil)
+	select {
+	case mensas <- mainText:
+		statusBar.StartLoading(mainText)
+	default:
+		// The channel is full: there are too many mensas selected for the goroutine to handle.
+		// noop.
 	}
-
-	if len(menus) > 0 {
-		cfg.Last.Name = mensa.Name
-	}
-
-	setTitle(mensa.Name)
 }
 
 // If the selected date has changed, load the meals for that date

@@ -31,10 +31,8 @@ func setupLayout(app *tview.Application, pages *tview.Pages) {
 	mainView.AddItem(mensaArea, 0, 1, true)
 	mainView.AddItem(menuArea, 0, 2, false)
 
-	titleView.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
-
-	appView.AddItem(titleView, 1, 0, false)
 	appView.AddItem(mainView, 0, 1, true)
+	appView.AddItem(statusBar, 1, 0, false)
 
 	setupKeybinds(app, mensaArea, menuArea)
 
