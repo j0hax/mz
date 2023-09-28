@@ -49,7 +49,6 @@ func (f *StatusBar) StartLoading(message string) {
 	go func() {
 		count := 0
 		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
 		for {
 			select {
 			case <-f.done:
