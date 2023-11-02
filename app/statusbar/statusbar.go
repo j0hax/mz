@@ -9,28 +9,35 @@ import (
 	"github.com/rivo/tview"
 )
 
+/*
+StatusBar is a special kind of tview.InputField.
+
+It is used to display application status, such as loading.
+*/
 type StatusBar struct {
+	*tview.InputField
 	app         *tview.Application
-	field       *tview.InputField
 	loadingDone chan bool
 	mutex       sync.Mutex
 }
 
 func NewStatusBar(application *tview.Application) *StatusBar {
-	i := tview.NewInputField()
-	i.SetDisabled(true)
-	return &StatusBar{
+	s := StatusBar{
+		InputField:  tview.NewInputField(),
 		app:         application,
-		field:       i,
 		loadingDone: make(chan bool),
 	}
+
+	s.SetDisabled(true)
+
+	return &s
 }
 
 func (f *StatusBar) setLabel(s string) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-	f.field.SetLabelWidth(len(s) + 1)
-	f.field.SetLabel(s)
+	f.SetLabelWidth(len(s) + 1)
+	f.SetLabel(s)
 }
 
 func (f *StatusBar) setMessage(items ...string) {
@@ -38,7 +45,7 @@ func (f *StatusBar) setMessage(items ...string) {
 
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-	f.field.SetText(message)
+	f.SetText(message)
 }
 
 // StartLoading displays a loading animation with a specified message.
